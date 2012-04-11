@@ -1437,7 +1437,11 @@ this IDbConnection cnn, string sql, Func<TFirst, TSecond, TThird, TFourth, TRetu
                   .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                   .Select(p => new PropInfo
                   {
-                      Name = p.Name,
+                      Name = Attribute.GetCustomAttributes(p)
+                                    .Where(a => a.GetType().Name == "ColumnAttribute" && a.GetType().GetProperty("Name") != null)
+                                    .Select(a => a.GetType().GetProperty("Name").GetGetMethod().Invoke(a, new object[0]).ToString())
+                                    .FirstOrDefault()
+                                ?? p.Name,
                       Setter = p.DeclaringType == t ? 
                         p.GetSetMethod(true) : 
                         p.DeclaringType.GetProperty(p.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true),
